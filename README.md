@@ -1,36 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trade Builder - AI-Enhanced Trading Algorithm Platform
 
-## Getting Started
+**The Duolingo + Spotify of trading algorithms**
 
-First, run the development server:
+An educational trading platform that combines ML-enhanced algorithm building, community features, and personality profiling to help traders learn, experiment, and optimize their trading strategies in a safe, educational environment.
+
+## 🎯 Project Vision
+
+Trade Builder is designed to make algorithmic trading accessible and educational. Instead of requiring deep technical knowledge or expensive software, users can:
+
+- **Build algorithms visually** by selecting technical indicators and adjusting weights
+- **Leverage ML models** that learn optimal indicator combinations from historical data
+- **Backtest strategies** against real market data to validate performance
+- **Learn from the community** by browsing and remixing shared algorithms
+- **Understand their trading personality** through behavioral analysis and personalized recommendations
+- **Practice safely** with paper trading before risking real capital
+
+### Key Differentiators
+
+- **Educational First**: Built for students and learners with clear explanations and tutorials
+- **ML-Weighted Indicators**: Machine learning suggests optimal weights for technical indicators
+- **Community Library**: Like Spotify playlists, discover and share algorithm "recipes"
+- **Personality Profiling**: Like Duolingo's adaptive learning, understand your trading style
+- **Visual Algorithm Builder**: No coding required - drag, drop, and configure
+- **Comprehensive Backtesting**: See how strategies would have performed historically
+- **Paper Trading**: Virtual portfolio to test strategies in real-time without risk
+
+## 🛠 Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) with App Router
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Charts**: [lightweight-charts](https://tradingview.github.io/lightweight-charts/)
+- **Future Additions**:
+  - Machine Learning: TensorFlow.js or similar
+  - Database: PostgreSQL/Supabase
+  - Authentication: NextAuth.js
+  - API: tRPC or Next.js API routes
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 20+ installed
+- npm, yarn, pnpm, or bun
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone https://github.com/mirgaon314/trade-builder.git
+cd trade-builder
+
+# Install dependencies
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Run the development server
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-## Learn More
+### Build
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Create a production build
+npm run build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start the production server
+npm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Linting
 
-## Deploy on Vercel
+```bash
+# Run ESLint
+npm run lint
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+trade-builder/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── builder/           # Algorithm builder interface
+│   │   ├── backtest/          # Backtesting dashboard
+│   │   ├── library/           # Community algorithm library
+│   │   ├── learn/             # Educational tutorials
+│   │   ├── paper-trading/     # Virtual trading dashboard
+│   │   ├── profile/           # User profile & personality
+│   │   ├── layout.tsx         # Root layout
+│   │   └── page.tsx           # Landing page
+│   ├── components/            # React components
+│   │   ├── ui/               # Reusable UI components (Button, Card, etc.)
+│   │   ├── charts/           # Chart components
+│   │   ├── builder/          # Algorithm builder components
+│   │   └── indicators/       # Indicator visualization components
+│   ├── lib/                   # Utilities and business logic
+│   │   ├── types/            # TypeScript type definitions
+│   │   ├── utils/            # Helper functions
+│   │   ├── indicators/       # Technical indicator calculations
+│   │   └── constants/        # App-wide constants
+│   ├── hooks/                 # Custom React hooks
+│   └── styles/                # Global styles and themes
+├── public/                    # Static assets
+└── docs/                      # Documentation
+```
+
+## 📚 Learning Goals
+
+As a CS student building this project, the goals are to learn:
+
+1. **Full-Stack Development**: Building a complete application from frontend to backend
+2. **Modern React Patterns**: Hooks, Server Components, Client Components
+3. **TypeScript**: Type-safe development practices
+4. **UI/UX Design**: Creating intuitive, educational interfaces
+5. **Machine Learning Integration**: Applying ML to real-world problems
+6. **Data Visualization**: Building interactive charts and dashboards
+7. **Software Architecture**: Structuring a scalable, maintainable codebase
+8. **Testing**: Unit tests, integration tests, and E2E testing
+9. **Performance Optimization**: Code splitting, lazy loading, caching
+10. **Deployment**: CI/CD, hosting, and production best practices
+
+## 🗺 Development Roadmap
+
+This project follows a phased development approach. See [ROADMAP.md](ROADMAP.md) for detailed phase descriptions and milestones.
+
+**Current Phase**: Phase 0 - Foundation Setup ✅
+
+## 🤝 Contributing
+
+This is primarily an educational project, but contributions are welcome! Please feel free to:
+
+- Report bugs or suggest features via GitHub Issues
+- Submit pull requests for improvements
+- Share feedback on the learning experience
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## 🙏 Acknowledgments
+
+- Built while learning full-stack development
+- Inspired by educational platforms like Duolingo and content platforms like Spotify
+- Thanks to the Next.js, React, and TypeScript communities
+
+---
+
+**Note**: This is an educational project. Not financial advice. Always do your own research before making investment decisions.
