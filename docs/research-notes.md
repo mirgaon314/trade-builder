@@ -40,3 +40,17 @@ Daily technical indicators on liquid index ETFs carry almost no predictive infor
 1. **Volatility model + sizing** — predict 20-day realized vol from features (this works), size positions by it, and report the leverage-free result. Reuses everything here.
 2. **Cross-sectional version** — same features on ~100 stocks, rank daily, hold the top decile long. This is where indicator models have historically shown something.
 3. Keep the long/flat model as what it is: a drawdown limiter, and let the personality layer choose how much drawdown protection a user wants to pay for.
+
+## Round 2 — other people's indicators (same day)
+
+| feature set (weighted model) | SPY | QQQ | TLT | GLD | IWM | mean |
+|---|---|---|---|---|---|---|
+| hold | 0.86 | 0.94 | 0.23 | 0.55 | 0.57 | 0.63 |
+| base (7 indicators) | 0.76 | 0.91 | 0.19 | 0.37 | 0.47 | 0.54 |
+| base + Ichimoku (11) | 0.69 | 0.93 | 0.12 | 0.27 | 0.41 | 0.48 |
+| base + trend-line angles (13) | 0.50 | 0.81 | 0.02 | 0.54 | 0.54 | 0.48 |
+| base + both (17) | 0.53 | 0.67 | 0.10 | 0.52 | 0.43 | 0.45 |
+| **Ichimoku only (4)** | 0.84 | 1.01 | 0.16 | 0.62 | 0.60 | **0.65** |
+| Ichimoku textbook rule, no learning | 0.56 | 0.78 | 0.01 | 0.38 | 0.05 | 0.36 |
+
+Trend-line angles = annualized slope of a log-price regression over 20/60/120 days plus the residual from the rolling mean. Robustness of Ichimoku-only across training windows is in the README. Lesson: with ~750 training days, four well-chosen features beat seventeen; feature count is the overfitting knob.

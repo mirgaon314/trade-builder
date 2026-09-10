@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd
 
-from tradebuilder import AlwaysLong, RsiRuleModel, WeightedIndicatorModel, feature_frame, walk_forward
+from tradebuilder import FEATURE_SETS, AlwaysLong, RsiRuleModel, WeightedIndicatorModel, feature_frame, walk_forward
 from tradebuilder.data import fetch
 
 
@@ -23,6 +23,7 @@ def main() -> None:
     p.add_argument("--train", type=int, default=750)
     p.add_argument("--test", type=int, default=250)
     p.add_argument("--cost-bps", type=float, default=5.0)
+    p.add_argument("--features", choices=list(FEATURE_SETS), default="base", help="which indicator set the model learns weights for")
     p.add_argument("--out", default="")
     a = p.parse_args()
 
@@ -32,7 +33,7 @@ def main() -> None:
         F = feature_frame(df)
         close = df["close"]
         r = {"asset": t, "years": round(len(F) / 252, 1)}
-        for name, factory in [("model", WeightedIndicatorModel), ("rsi", RsiRuleModel), ("hold", AlwaysLong)]:
+        for name, factory in [("model", lambda: WeightedIndicatorModel(features=FEATURE_SETS[a.features])), ("rsi", RsiRuleModel), ("hold", AlwaysLong)]:
             wf = walk_forward(F, close, factory, train=a.train, test=a.test, cost_bps=a.cost_bps)
             m = wf.out_of_sample.metrics
             r[f"{name}_sharpe"] = m["sharpe"]; r[f"{name}_cagr"] = m["cagr"]; r[f"{name}_maxdd"] = m["max_drawdown"]

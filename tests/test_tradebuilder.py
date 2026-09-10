@@ -67,7 +67,7 @@ def test_walk_forward_shapes():
     assert len(wf.folds) == (len(F) - 500) // 200
     assert wf.positions.index.is_monotonic_increasing
     assert set(wf.positions.unique()) <= {0, 1}
-    assert wf.folds[0].weights is not None and len(wf.folds[0].weights) == 7
+    assert wf.folds[0].weights is not None and len(wf.folds[0].weights) == 7  # default set stays 7; ichimoku is opt-in
 
 
 def test_explain_sums_to_log_odds():

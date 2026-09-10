@@ -25,6 +25,7 @@ Per-fold table, learned weights, and the explained latest signal are all printed
 ```bash
 pip install -r requirements.txt
 python scripts/run_backtest.py --ticker SPY --start 2010-01-01
+python scripts/run_backtest.py --ticker QQQ --features ichimoku
 python scripts/run_backtest.py --csv data/my_bars.csv --train 500 --test 125 --cost-bps 10
 python -m pytest tests -q
 ```
@@ -42,6 +43,26 @@ python -m pytest tests -q
 | IWM | 16.5 | 0.47 | 0.36 | 0.54 | +6.8% | +9.8% | -30.9% | -41.1% | 70% | 10/13 |
 
 Pattern: the weighted model beats the RSI rule everywhere, loses to buy & hold on everything that trended up (SPY, QQQ, IWM, GLD), and **beats buy & hold on TLT**, the one asset that went sideways and then fell, with about half the drawdown (-27% vs -48%). Same on QQQ: less return than holding, but a shallower worst loss (-29% vs -35%). That is what a long/flat model trained on next-day direction turns out to be: not an alpha engine, a drawdown limiter that charges a fee in bull markets. Whether that fee is worth paying is a question about the investor, not the model.
+
+## Ichimoku as the feature set
+
+A friend's suggestion: instead of the seven generic indicators, feed the model **Ichimoku Kinko Hyo** — conversion/base line gap, signed distance from the cloud, cloud thickness, lagging span. Four features, same walk-forward (`--features ichimoku`):
+
+| asset | yrs | model Sharpe | RSI Sharpe | hold Sharpe | model CAGR | hold CAGR | model maxDD | hold maxDD | exposure | OOS folds >0 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| SPY | 16.3 | 0.84 | 0.46 | 0.85 | +13.5% | +13.9% | -31.0% | -33.7% | 94% | 11/13 |
+| QQQ | 16.3 | 1.01 | 0.76 | 0.95 | +19.9% | +19.4% | -28.6% | -35.1% | 90% | 13/13 |
+| TLT | 16.3 | 0.22 | -0.11 | 0.08 | +1.8% | +0.1% | -30.3% | -48.4% | 63% | 8/13 |
+| GLD | 16.3 | 0.62 | 0.31 | 0.64 | +8.0% | +9.4% | -32.7% | -29.6% | 69% | 10/13 |
+| IWM | 16.3 | 0.60 | 0.30 | 0.53 | +10.0% | +9.6% | -32.6% | -41.1% | 79% | 8/13 |
+
+This is the first configuration that **matches buy & hold on risk-adjusted return while cutting drawdown**: 5-asset portfolio Sharpe 1.05 vs 0.96 for hold, worst loss -17% vs -25%. It beats hold outright on QQQ, TLT and IWM.
+
+Caveats, because this is exactly where people fool themselves:
+- It depends on the training window. With 750 training days the portfolio Sharpe is 1.05; with 500 or 1000 it is 0.92-0.94, a tie with hold (0.93-0.94). Drawdown reduction holds in all three.
+- Fold by fold it beats hold about half the time (36 of 65 asset-years). The edge is small and comes from avoiding the bad years, not from winning the good ones.
+- Adding the Ichimoku features *on top of* the base seven made things worse (mean Sharpe 0.48 vs 0.54): more inputs, same 750 days, more overfitting. Fewer, structurally different features won.
+- The textbook Ichimoku rule (long when price is above the cloud and tenkan > kijun) scores 0.36 on its own. The value is in letting the model weight the four signals, not in the rule.
 
 ## What it does *not* do (yet)
 

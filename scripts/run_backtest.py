@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd
 
-from tradebuilder import (AlwaysLong, RsiRuleModel, WeightedIndicatorModel, feature_frame, overfit_warning, walk_forward)
+from tradebuilder import (FEATURE_SETS, AlwaysLong, RsiRuleModel, WeightedIndicatorModel, feature_frame, overfit_warning, walk_forward)
 from tradebuilder.data import fetch, load_csv
 from tradebuilder.indicators import latest_features
 
@@ -27,6 +27,7 @@ def main() -> None:
     p.add_argument("--train", type=int, default=750)
     p.add_argument("--test", type=int, default=250)
     p.add_argument("--cost-bps", type=float, default=5.0)
+    p.add_argument("--features", choices=list(FEATURE_SETS), default="base", help="which indicator set the model learns weights for")
     p.add_argument("--C", type=float, default=1.0, help="inverse regularization strength")
     a = p.parse_args()
 
@@ -39,7 +40,7 @@ def main() -> None:
     pd.set_option("display.width", 120)
     results = {}
     for name, factory in [
-        ("weighted (logistic)", lambda: WeightedIndicatorModel(C=a.C)),
+        ("weighted (logistic)", lambda: WeightedIndicatorModel(features=FEATURE_SETS[a.features], C=a.C)),
         ("RSI 30/70 rule", RsiRuleModel),
         ("buy & hold", AlwaysLong),
     ]:
@@ -57,7 +58,7 @@ def main() -> None:
     print("\nlast fold weights (standardized features):")
     print(last.sort_values(key=abs, ascending=False).to_string(float_format=lambda x: f"{x:+.3f}"))
 
-    model = WeightedIndicatorModel(C=a.C).fit(F.iloc[-a.train:])
+    model = WeightedIndicatorModel(features=FEATURE_SETS[a.features], C=a.C).fit(F.iloc[-a.train:])
     row = latest_features(df)
     ex = model.explain(row)
     print(f"\nlatest signal ({row.name.date()}): P(up) = {ex.attrs['p_up']:.3f} -> {'LONG' if ex.attrs['p_up'] > 0.5 else 'FLAT'}")
