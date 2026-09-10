@@ -29,6 +29,20 @@ python scripts/run_backtest.py --csv data/my_bars.csv --train 500 --test 125 --c
 python -m pytest tests -q
 ```
 
+## Does it depend on the asset?
+
+`scripts/compare_assets.py` runs the identical walk-forward on five ETFs (2010-2026, 5 bps per side):
+
+| asset | yrs | model Sharpe | RSI Sharpe | hold Sharpe | model CAGR | hold CAGR | model maxDD | hold maxDD | exposure | OOS folds >0 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| SPY | 16.5 | 0.76 | 0.51 | 0.87 | +11.6% | +14.2% | -33.7% | -33.7% | 90% | 10/13 |
+| QQQ | 16.5 | 0.90 | 0.74 | 0.95 | +16.7% | +19.4% | -28.6% | -35.1% | 89% | 11/13 |
+| TLT | 16.5 | 0.20 | -0.08 | 0.12 | +1.6% | +0.6% | -27.2% | -48.4% | 64% | 8/13 |
+| GLD | 16.5 | 0.37 | 0.29 | 0.61 | +3.8% | +8.8% | -29.7% | -35.7% | 60% | 7/13 |
+| IWM | 16.5 | 0.47 | 0.36 | 0.54 | +6.8% | +9.8% | -30.9% | -41.1% | 70% | 10/13 |
+
+Pattern: the weighted model beats the RSI rule everywhere, loses to buy & hold on everything that trended up (SPY, QQQ, IWM, GLD), and **beats buy & hold on TLT**, the one asset that went sideways and then fell, with about half the drawdown (-27% vs -48%). Same on QQQ: less return than holding, but a shallower worst loss (-29% vs -35%). That is what a long/flat model trained on next-day direction turns out to be: not an alpha engine, a drawdown limiter that charges a fee in bull markets. Whether that fee is worth paying is a question about the investor, not the model.
+
 ## What it does *not* do (yet)
 
 - shorting, position sizing, multiple assets
@@ -45,6 +59,7 @@ tradebuilder/
   backtest.py     run_backtest(close, positions, cost_bps) → BacktestResult
   validation.py   walk_forward(...), overfit_warning(...)
 scripts/run_backtest.py   end-to-end CLI
+scripts/compare_assets.py same walk-forward across several tickers
 tests/                    7 tests: indicator sanity, no-look-ahead, cost accounting, fold shapes, explanation sums to log-odds
 ```
 
