@@ -7,6 +7,8 @@ dependencies = ["numpy>=1.24", "pandas>=2.0", "scikit-learn>=1.3"]
 
 [project.optional-dependencies]
 data = ["yfinance>=0.2"]
+krx = ["finance-datareader>=0.9"]
+# swing needs the `trader` package from https://github.com/mirgaon314/fib-channel-trader (TRADER_PATH, default ~/trader)
 dev = ["pytest"]
 
 [tool.setuptools.packages.find]

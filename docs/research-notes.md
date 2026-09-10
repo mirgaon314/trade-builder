@@ -150,3 +150,34 @@ Summary across the 20 stocks:
 What Owen's rules do: the bounce-confirmed entry lifts the hit rate from 31% to 45% and gives the smallest drawdowns of any variant — exactly the "buy when it has stopped and looks like it will go up" intent. What they do not do: earn. Winners shrink (you buy a day later and higher, the target does not move), so the equity curve stays flat and no variant beats holding the stock on a risk-adjusted basis, in either market. The stocks where the rule looked best (META, KB금융, AMZN) are the ones that oscillated inside a channel for years; the ones where it lost (한화에어로, NAVER, 셀트리온, BA) trended hard in one direction and the "support" kept breaking.
 
 Honest conclusion for the whole day: a single-stock swing rule built on channel touches is a **risk-control tool, not a return engine**. Its real product is a smaller worst-case loss at the price of sitting out most of the up-move. Entry timing is the right knob to work on (it moved win rate 14 points), but the next gain has to come from *which* stocks to apply it to — channel-bound names — which is a selection problem this repo does not solve yet.
+
+## Round 6 — can a model pick *which* touches to take? (2026-09-11)
+
+Why this question: the swing rule's ceiling on a single stock is set by exposure (~16% of days in the market) and a fixed target, so even a perfect touch-picker cannot beat holding a stock that trended (with every trade a winner, mean CAGR would be +19.7% vs +22.1% for holding; 9 of 20 stocks would need a win rate above 100%). As one book across many stocks, exposure fills in (about 3 positions open on average) and per-trade expectancy becomes the only lever, so touch selection is worth testing there.
+
+Setup (`scripts/touch_dataset.py`, `scripts/touch_model.py`, simulator now in `tradebuilder/swing.py`): every touch of a proposed support line on the same 20 stocks, no entry gate, overlapping events allowed — **3,789 touches, 2011-2026**. Each row: what the touch day looked like at its close (wick ratio, close/low vs the line, gap, volume ratio, 5/20-day return, RSI, ATR, range) plus the builder's own read at order time (state, cloud, RSI flag, channel position, reward:risk, channel score/reversal rate/touch count) and the label: buy the next open, exit at target / stop (3-5%, lifted to ≥5% below the fill) / 40 days. Walk-forward by year, 3 years minimum training, 60-day embargo before each test year, pooled across stocks; out-of-sample 2014-2026, 3,420 touches.
+
+| take which touches | n / yr | win | mean ret / trade | sum of trade returns / yr |
+|---|---|---|---|---|
+| all | 263 | 36.8% | +0.1% | +13.7% |
+| Owen's gate (cloud, RSI, lower 80%, rr ≥ 1) | 104 | 33.3% | +0.1% | +9.6% |
+| **bounce-confirmed** (closed back above the line) | 121 | **47.3%** | +0.2% | +23.6% |
+| gate + bounce (= round 5's best variant) | 46 | 43.8% | +0.2% | +9.3% |
+| logistic, P(win) > 0.5 | 72 | **54.8%** | +0.2% | +12.8% |
+| logistic, top 30% by P(win) per year | 79 | 51.7% | −0.0% | −3.1% |
+| logistic, E[ret] = p·target − (1−p)·stop > 0 | 124 | 44.6% | **+0.3%** | **+28.6%** |
+| gradient boosting, E[ret] > 0 | 132 | 43.3% | +0.2% | +28.1% |
+| ridge / GBM regression on the return itself, top 30% | 79 | 35-37% | +0.0-0.2% | +1.8% / +14.2% |
+
+Out-of-sample AUC for P(win): 0.686 (logistic) / 0.685 (GBM), positive in 13 of 13 years; the bounce flag alone scores 0.603. Largest logistic weights: `target_pct` −0.42, `low_vs_line` +0.40, `close_vs_line` +0.26, `stop_pct` −0.16, `wick` +0.12, `rsi_14` −0.12.
+
+What this says:
+
+- **The classifier's headline is a tautology.** Its strongest signal is "the target is close", which raises the hit rate to 55% while the money per trade stays where it was — it is picking easy small wins. Ranking by P(win) alone actually loses money (top 30%: −3.1%/yr). Any "predict the bounce" model has to be scored on expected return, not accuracy.
+- **After correcting for payoff, the model's edge over the one-line bounce rule is within noise.** E[ret] > 0 takes about the same number of touches as the bounce rule (124 vs 121 per year) and earns +28.6% vs +23.6% summed per-trade return per year — but it beats the bounce rule in only **7 of 13 years**, and the yearly sums swing from −1.7 to +2.1 with the market (2016, 2023 good; 2018, 2022, 2024 bad for every rule). Pooled US touches are better than KRX (win 47% vs 42%, mean +0.3% vs +0.1%).
+- **Owen's gate hurts** on this dataset (33% vs 37% for all touches): the cloud/RSI/position filters remove touches without improving the ones that remain. The bounce confirmation is the only hand rule that does anything, and the model mostly re-learns it (`low_vs_line`, `close_vs_line`, `wick`).
+- Mean return per trade is +0.2-0.3% at best against 10 bps round trip, with 46% of exits at the target and 45% at the stop. That is the whole edge: about a quarter of a percent per touch, unstable year to year.
+
+Honest conclusion: touch-day information separates bounces from breakdowns a little (AUC 0.69, every year), but not enough to change the economics — the model turns 47% → 55% hit rate into the *same* money, and once you score it on money it is a coin flip against "did it close back above the line". The channel touch is not where the return lives. If this line is pursued further, the two things not yet tried are (1) a market-regime input (index 5/20-day return — every rule's bad years are the same years) and (2) letting winners run past the fixed target, since the target cap is what turns better picks into no extra money.
+
+Bookkeeping from porting the simulator: the round-5 "June rule" column was run with the `ready+wait` gate (not `ready` only); the `n/a` CAGR cells for 삼성전자 and 한화오션 were caused by zero-price rows FinanceDataReader returns on halted days (2018 split), now dropped in `fetch_krx`. Re-running round 5 with the ported code on 2026-09-11 reproduces every US cell within ±1 trade (yfinance re-adjusts the whole series on each dividend); KRX cells move by up to ~9 trades because the zero-price rows (삼성전자, 한화오션, NAVER) also distorted the channel scale for a year and because KRX tick rounding makes the one-position-at-a-time path sensitive to any data revision. Old and new code give identical results on identical data. The summary row is unchanged: mean win 32% / 38% / 45%, Sharpe above hold in 0 / 1 / 0 of 20.

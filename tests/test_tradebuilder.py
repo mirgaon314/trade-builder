@@ -78,3 +78,82 @@ def test_explain_sums_to_log_odds():
     ex = m.explain(row)
     assert np.isclose(ex.attrs["intercept"] + ex["contribution"].sum(), ex.attrs["log_odds"])
     assert np.isclose(ex.attrs["p_up"], m.proba(F.iloc[[-1]]).iloc[0], atol=1e-9)
+
+
+# ---------------------------------------------------------------- swing simulator (pure pieces run without `trader`)
+
+from tradebuilder.swing import exit_check, owen_stop, touched
+
+
+def test_exit_check_order_of_precedence():
+    # gap below the stop at the open beats everything
+    assert exit_check(o=90, h=120, l=85, c=100, entry=100, target=110, stop=95, held=1, max_hold=40) == (90, "stop-gap")
+    # stop touched intraday fills at the stop
+    assert exit_check(o=100, h=105, l=94, c=100, entry=100, target=110, stop=95, held=1, max_hold=40) == (95, "stop")
+    # target touched fills at max(open, target): an up-gap is kept
+    assert exit_check(o=112, h=115, l=111, c=113, entry=100, target=110, stop=95, held=1, max_hold=40) == (112, "target")
+    # time exit at the close
+    assert exit_check(o=100, h=101, l=99, c=100.5, entry=100, target=110, stop=95, held=40, max_hold=40) == (100.5, "time")
+    assert exit_check(o=100, h=101, l=99, c=100.5, entry=100, target=110, stop=95, held=5, max_hold=40) is None
+
+
+def test_touched_and_bounce():
+    assert touched(l=99, c=101, line=100) == (True, True)    # reached and closed back above
+    assert touched(l=99, c=99.5, line=100) == (True, False)  # reached, closed below
+    assert touched(l=101, c=102, line=100) == (False, False)
+
+
+def test_owen_stop_clamps_to_3_5_pct_band():
+    idx = pd.bdate_range("2020-01-01", periods=20)
+    daily = pd.DataFrame({"Low": 100.0}, index=idx)
+    assert np.isclose(owen_stop(100.0, daily), 97.0)          # low too close -> 3% below
+    daily["Low"] = 80.0
+    assert np.isclose(owen_stop(100.0, daily), 95.0)          # low too far -> 5% below
+    daily["Low"] = 96.0
+    assert np.isclose(owen_stop(100.0, daily), 96.0 * 0.997)  # inside the band -> the low minus buffer
+
+
+def test_simulate_smoke_if_trader_available():
+    """End to end on synthetic bars when the fib-channel-trader checkout is present; skipped otherwise."""
+    pytest = __import__("pytest")
+    from tradebuilder.swing import simulate
+    try:
+        stats, trades = simulate(_prices(600, seed=3), gate="any", entry="bounce", stop_fn=owen_stop, start=300)
+    except ImportError as e:
+        pytest.skip(str(e))
+    assert set(stats) >= {"trades", "win", "cagr", "sharpe", "maxdd", "exposure", "hold_cagr"}
+    assert np.isfinite(stats["cagr"]) and np.isfinite(stats["sharpe"])
+    if len(trades):
+        assert (trades.entry_px > 0).all() and trades.ret.notna().all()
+        assert (trades.target > trades.stop).all()
+
+
+from tradebuilder.swing import bar_features, label_forward
+
+
+def _bars(rows):
+    idx = pd.bdate_range("2021-01-01", periods=len(rows))
+    return pd.DataFrame(rows, columns=["Open", "High", "Low", "Close", "Volume"], index=idx, dtype=float)
+
+
+def test_bar_features_read_the_touch_day():
+    daily = _bars([[100, 101, 99, 100, 1000]] * 30 + [[99, 104, 94, 102, 3000]])  # last bar: pierced to 94, closed at 102
+    f = bar_features(daily, 30, line=95.0)
+    assert np.isclose(f["wick"], (102 - 94) / (104 - 94))
+    assert np.isclose(f["low_vs_line"], 94 / 95 - 1) and np.isclose(f["close_vs_line"], 102 / 95 - 1)
+    assert np.isclose(f["vol_ratio"], 3.0) and np.isclose(f["gap"], -0.01)
+    assert 0 <= f["rsi_14"] <= 100 and f["atr_pct"] > 0
+
+
+def test_label_forward_target_then_stop():
+    base = [[100, 101, 99, 100, 1]] * 5
+    # touch at i=4; next open 100; day 6 hits 110 target
+    daily = _bars(base + [[100, 100.5, 99.5, 100, 1], [101, 111, 100, 110, 1]])
+    lab = label_forward(daily, 4, target=110.0, stop=96.0, max_hold=40, cost=0.0)
+    assert lab["why"] == "target" and np.isclose(lab["ret"], 0.10) and lab["days"] == 1
+    # stop is lifted to at least 5% below the fill
+    daily = _bars(base + [[100, 100.5, 99.5, 100, 1], [100, 100.5, 94.0, 95, 1]])
+    lab = label_forward(daily, 4, target=110.0, stop=90.0, max_hold=40, cost=0.0)
+    assert lab["why"] == "stop" and np.isclose(lab["ret"], -0.05)
+    # no next bar -> no label
+    assert np.isnan(label_forward(daily, len(daily) - 1, 110.0, 90.0, 40, 0.0)["ret"])
