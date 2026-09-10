@@ -298,3 +298,29 @@ What changes and what does not:
 - Caveat on the flat decade: with 42-70% coverage, "2001-2010" here is not flat (hold 20d is +0.94% per trade) because the companies that died are missing. The clean flat-decade evidence stays the index-ETF check above, where the trailing exit was the one rule with a positive mean.
 
 Conclusion after nine rounds, stated once: on US large caps, any span, any universe tried, **being long earns more per day of capital than every rule in this repo**; the initial stop is a cost paid every year; the trailing exit buys a large cut in the worst trades at about half the return, and is the only rule that comes out ahead when the index drift is zero. The channel touch, the gate, bounce confirmation, the touch classifier and the index regime filter add nothing that survived a placebo, a paired comparison, or a hindsight-free sample. If this repo is to hold a *strategy* rather than a set of measured non-results, the return has to come from somewhere other than timing entries and exits on price alone — cross-sectional selection, sizing by forecast volatility, or data the price series does not contain, as round 1 already said.
+
+## Round 10 — the setup quants actually use: cross-sectional long-short (2026-09-11)
+
+Owen's objection to rounds 4-9: "if nothing works, why do quants exist — we must have set it up wrong." Half right. Everything so far was single-stock, long-only, price-timing; beta swamps any timing edge, and twenty names give no breadth. `scripts/xsec.py` is the setup that removes both problems: every month-end, rank all point-in-time S&P 500 members by one signal, long the top decile, short the bottom decile, equal weight, hold a month, 10 bps per side on turnover. Panel: 761 of 1,209 historical members have Yahoo history (`data/sp500_monthly_close.csv`), about 365 names per month, 2001-2026. Survivorship now works *against* the strategy — the delisted losers a short leg would have profited from are missing.
+
+First signal, pre-registered: classic 12-1 momentum. Validation against Kenneth French's UMD factor (all US stocks, delisted included), month-aligned: **correlation 0.91** — the machine is right.
+
+| 2001-2026, monthly | ann. return | vol | Sharpe | max DD | beta to SPY |
+|---|---|---|---|---|---|
+| long-short decile, this panel (full size) | −3.3% | 27% | −0.12 | −70% (2009: −78%) | −0.7 |
+| French UMD, same months | +2.8% | 17% | 0.11 | −58% (2009: −53%) | — |
+| French UMD, 1927-2000 | +9.4% | 16% | 0.59 | — | — |
+| long decile only | +12.6% | 18% | 0.69 | −53% | 0.96 |
+| equal-weight universe | +12.1% | 17% | 0.72 | −53% | 1.05 |
+| long decile minus universe | +0.5% / yr, t = 0.2 | | | | |
+
+Sanity signals on the same panel: 6-1 momentum −0.8% / yr (Sharpe −0.06); 1-month reversal −0.1% (Sharpe −0.01, 87% monthly turnover).
+
+What this says:
+
+- **The pipeline is correct** (0.91 correlation with the academic factor) and this is the right way to score any signal in this repo from now on: dollar-neutral, hundreds of names, monthly, against a published factor.
+- **Price momentum in US large caps has been dead for this whole era.** Even with perfect data the textbook factor made +2.8% a year at Sharpe 0.11 since 2001, with a −53% year in 2009; before 2000 it was Sharpe 0.59. Our survivor-only panel subtracts another ~6 points a year, exactly on the short side, as predicted.
+- The long leg is the universe: winners-only returns +12.6% vs +12.1% equal-weight, t = 0.2. Ranking by past returns tells you nothing about which large caps to hold next month.
+- So the honest answer to "why do quants exist": not from this. What made money after 2000 in equities is mostly not price-only signals on liquid large caps — it is breadth beyond the S&P 500, fundamentals and alternative data, intraday microstructure, and other asset classes. This repo now has the harness to test a signal properly; what it does not have is a signal.
+
+Next, if continued: plug this repo's own daily indicator model into `xsec.py` as a ranking signal (P(up) per stock, rank cross-sectionally) — one run, scored the same way — before spending any more time on price-based timing.

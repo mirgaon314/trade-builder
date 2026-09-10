@@ -100,6 +100,7 @@ scripts/touch_exits.py    re-labels every touch under trailing-stop exits (no fi
 scripts/touch_book.py     one book across the 20 stocks: N slots, 1/N sizing, daily mark to market, vs equal-weight hold
 scripts/regime_filter.py  one index regime filter (20-day return > 0) on ETFs 2000-2026 and on the touches — it fails
 scripts/universe.py       hindsight-free S&P 500 sample per year (2001-2025), placebo entries, three exits — holding still wins per capital-day
+scripts/xsec.py           cross-sectional long-short on the point-in-time S&P 500 (monthly deciles, dollar-neutral); 12-1 momentum matches French's UMD at 0.91 correlation and earns nothing since 2001
 tests/                    14 tests: indicator sanity, no-look-ahead, cost accounting, fold shapes, explanation sums to log-odds, swing exit/bounce/stop/trailing logic, touch features and labels
 ```
 
