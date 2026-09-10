@@ -248,3 +248,15 @@ The ladder from +0.2% to +1.3% per trade in rounds 5-7 is a *holding-period* lad
 3. One regime filter (index 20-day return > 0): are 2018 / 2022 / 2024 a rule failure or plain beta?
 
 If 1 fails, this repo resets to a "rule-free N-day long book" and the channel engine stays what round 4 already suggested: a chart annotation, not a signal.
+
+**Regime check (Owen's question: is hold winning only because 2011-2026 was a bull market?).** Partly yes. SPY was down in only 2 of the 16 sample years, and in those two (2018, 2022) the rules did not beat holding either: per touch, hold20 −1.0% / −0.6% vs stop-only −1.0% / −1.3% vs trail 8% −0.6% / −1.2%. Across the five weak years the mean is hold20 +0.7% vs about −0.5% for both rules; what the stop buys per trade is the tail (5th percentile −5% vs −14%), not the year. To see a real bear regime the same three exits were run with placebo entries (every 5th day) on SPY / QQQ / IWM over 2000-2010 vs 2010-2026:
+
+| | hold 20 days | stop only, 20 days | trail 8% (avg hold) | 5th pct hold / trail |
+|---|---|---|---|---|
+| SPY 2000-2010 | +0.01% | −0.03% | **+0.33%** (47 d) | −8.5% / −4.8% |
+| QQQ 2000-2010 | −0.23% | −0.16% | **+0.60%** (34 d) | −16.4% / −5.1% |
+| IWM 2000-2010 | +0.36% | +0.38% | +0.37% (35 d) | −10.7% / −5.1% |
+| SPY 2010-2026 | +1.06% | +0.66% | +2.12% (62 d) | −6.0% / −4.8% |
+| QQQ 2010-2026 | +1.42% | +0.85% | +1.90% (48 d) | −7.1% / −5.1% |
+
+In the flat decade the trailing exit is the only rule with a positive mean and it cuts the worst trades by two thirds; in the bull decade holding earns more per day of capital (SPY: 0.053% vs 0.034%). So "the rules only subtract" is a bull-market statement. The cost of the stop is paid every year; its protection shows up only when the drift is gone. That makes the regime question the first thing to settle, and it means any rule here has to be scored on both a bull and a flat span, never on 2010-2026 alone.
