@@ -54,3 +54,20 @@ Daily technical indicators on liquid index ETFs carry almost no predictive infor
 | Ichimoku textbook rule, no learning | 0.56 | 0.78 | 0.01 | 0.38 | 0.05 | 0.36 |
 
 Trend-line angles = annualized slope of a log-price regression over 20/60/120 days plus the residual from the rolling mean. Robustness of Ichimoku-only across training windows is in the README. Lesson: with ~750 training days, four well-chosen features beat seventeen; feature count is the overfitting knob.
+
+## Round 3 — Fibonacci channel ("빗각") features from the `trader` engine
+
+The channel engine from the separate `trader` project (weekly pivots → candidate parallel channels → recency-weighted touch-reversal score → best channel, adaptive lookback) was refit every 10 trading days on data up to that day only, and five per-day features were derived from the current best channel: distance to the nearest level line, distance to the next target level, channel slope (annualized / price), channel score, and lookback window length.
+
+| feature set | SPY | QQQ | TLT | GLD | IWM | mean | 5-asset portfolio |
+|---|---|---|---|---|---|---|---|
+| hold | 0.86 | 0.94 | 0.22 | 0.49 | 0.55 | 0.61 | 0.96 / dd -25.5% |
+| base (7) | 0.75 | 0.88 | 0.30 | 0.53 | 0.21 | 0.53 | 0.85 / dd -18.3% |
+| Ichimoku (4) | 0.81 | 0.92 | 0.29 | 0.85 | 0.53 | **0.68** | **1.04** / dd -20.9% |
+| channel (5) | 0.74 | 0.70 | 0.04 | 0.31 | 0.19 | 0.40 | 0.67 / dd -24.7% |
+| Ichimoku + channel | 0.68 | 0.80 | 0.33 | 0.45 | 0.42 | 0.53 | 0.88 / dd -19.1% |
+| base + channel | 0.52 | 0.76 | 0.15 | 0.53 | 0.13 | 0.42 | 0.70 / dd -20.4% |
+
+(Rows differ slightly from Round 2 because the channel needs 300 warm-up days, which shifts the walk-forward folds.)
+
+As daily-direction features the channel does not help and dilutes Ichimoku. That is not surprising: the channel was designed as a **swing tool** — buy at a line touch, target the next level, stop below — and "is tomorrow up?" is the wrong question to ask it. The right test is a trade-level backtest of the actual entry/target/stop rule from `trader/signal/builder.py`, which is a different experiment (next).
