@@ -260,3 +260,22 @@ If 1 fails, this repo resets to a "rule-free N-day long book" and the channel en
 | QQQ 2010-2026 | +1.42% | +0.85% | +1.90% (48 d) | −7.1% / −5.1% |
 
 In the flat decade the trailing exit is the only rule with a positive mean and it cuts the worst trades by two thirds; in the bull decade holding earns more per day of capital (SPY: 0.053% vs 0.034%). So "the rules only subtract" is a bull-market statement. The cost of the stop is paid every year; its protection shows up only when the drift is gone. That makes the regime question the first thing to settle, and it means any rule here has to be scored on both a bull and a flat span, never on 2010-2026 alone.
+
+## Round 8 — one regime filter (2026-09-11)
+
+Pre-registered: enter only when the index's 20-day return is positive (SPY for US, KOSPI for KRX). Nothing else changes. `scripts/regime_filter.py`, two panels, same three exits as the regime check above. A 200-day-MA version is printed once as a sanity variant, not as a second hypothesis.
+
+| | filter on | hold 20d, no stop: sum / yr | trail 8%: sum / yr | trail 8% mean / trade |
+|---|---|---|---|---|
+| SPY 2000-2010, no filter | — | +0.5% | +16.6% | +0.33% |
+| SPY 2000-2010, r20 > 0 | 57% of days | +1.5% | +19.8% | +0.69% |
+| SPY 2010-2026, no filter | — | +53.5% | +106.9% | +2.12% |
+| SPY 2010-2026, r20 > 0 | 69% | +25.1% | +66.6% | +1.93% |
+| 20-stock touches, no filter | — | +491% | +261% | +1.07% |
+| 20-stock touches, r20 > 0 | 53% of touches | +227% | +153% | +1.19% |
+
+(sums are per-trade returns added up per year, i.e. exposure-aware; return per capital-day is unchanged by the filter in every cell, 0.0000-0.0001 differences.)
+
+Verdict: **fails.** The filter raises the per-trade mean a little in the flat decade and not at all on the stocks, while removing a third to a half of the trades everywhere — so exposure-adjusted return is flat in 2000-2010 and halved in 2010-2026. It does not rescue the bad years: on the touches 2022 gets *worse* with the filter on (hold20 −0.6% → −5.2% per trade, trail −1.2% → −1.4%), because a positive 20-day index return inside a bear market is a rally to sell, not a regime; 2018 improves slightly (−1.0% → −0.3%); 2011 and 2015 worsen. The 200-day-MA variant does help in the flat decade on SPY (hold20 sum +0.5% → +19% / yr, trail +17% → +33%) but costs the same third of the bull-market exposure and is neutral on the stocks (per capital-day 0.0007 → 0.0008). So the bad years are beta the rules cannot see in time with a price-only index signal, and "hold in bull, trail in flat" is not something a 20-day lookback can switch.
+
+State of the research after eight rounds: on hindsight-picked large caps 2011-2026, every rule tested earns less per day of capital than being long; the trailing exit is the only rule with a positive mean in a flat decade and it buys a two-thirds cut in the worst trades; the channel touch adds nothing as an entry; a simple index regime filter does not change any of that. The single remaining question is whether any of this changes on a universe chosen without hindsight.

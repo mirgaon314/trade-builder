@@ -98,6 +98,7 @@ scripts/touch_dataset.py  every support-line touch on those stocks with touch-da
 scripts/touch_model.py    walk-forward model that picks which touches to take, scored against the hand rules
 scripts/touch_exits.py    re-labels every touch under trailing-stop exits (no fixed target)
 scripts/touch_book.py     one book across the 20 stocks: N slots, 1/N sizing, daily mark to market, vs equal-weight hold
+scripts/regime_filter.py  one index regime filter (20-day return > 0) on ETFs 2000-2026 and on the touches — it fails
 tests/                    14 tests: indicator sanity, no-look-ahead, cost accounting, fold shapes, explanation sums to log-odds, swing exit/bounce/stop/trailing logic, touch features and labels
 ```
 
