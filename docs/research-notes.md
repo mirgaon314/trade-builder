@@ -104,3 +104,49 @@ Without any confirmation gate (limit buy at the support line whenever one exists
 | IWM | 166 | 47% | +3.6% | -2.9% | +0.4% | 0.09 | -50% | 33% | +10.2% / 0.55 / -41% |
 
 Dropping the Ichimoku/RSI/reward-risk gate multiplies trades by ~8 and turns the flat curve into a small positive one on the equity ETFs, but the payoff ratio collapses toward 1:1 and the drawdown protection is gone on IWM (-50%). The gate trades away almost all the return to keep the losses small; without it the rule is an ordinary mean-reversion entry with no edge over holding.
+
+## Round 5 — the channel rule on 20 single stocks (US + KRX), three entry/stop variants
+
+Same swing simulator as Round 4, on 10 US stocks (2010-2026) and 10 KRX stocks (2015-2026, KRX tick rounding on). Each cell is **CAGR / Sharpe / max drawdown (trades, win rate)**.
+
+- **June rule**: limit buy at the support line, swing-low/ATR stop capped 2-7%, Ichimoku + RSI + reward:risk ≥ 2 gate, scan every 5 days.
+- **Owen, limit**: same scan, stop = recent 10-bar low clamped to 3-5% below entry, gate = not below cloud, RSI < 70, lower 80% of the channel, reward:risk ≥ 1; limit buy at the line.
+- **Owen, bounce**: same, but only buy at the next open after a day that touched the line and closed back above it ("it stopped at support and looks like it will turn").
+
+| | hold CAGR / Sharpe / maxDD | June rule (limit @ line, 2:1 gate) | Owen: stop 3-5%, limit @ line | Owen: stop 3-5%, buy after bounce |
+|---|---|---|---|---|
+| AAPL | +25% / 0.92 / -44% | +3% / 0.42 / -14% (48t, 40%) | +1% / 0.17 / -21% (86t, 42%) | +3% / 0.39 / -16% (59t, 54%) |
+| MSFT | +23% / 0.92 / -37% | +1% / 0.12 / -16% (31t, 32%) | +0% / 0.09 / -26% (70t, 43%) | +1% / 0.13 / -18% (53t, 51%) |
+| NVDA | +50% / 1.13 / -66% | +0% / 0.09 / -38% (52t, 33%) | +4% / 0.32 / -39% (109t, 42%) | +0% / 0.07 / -39% (83t, 41%) |
+| AMD | +31% / 0.75 / -82% | -0% / 0.05 / -47% (50t, 30%) | +2% / 0.20 / -38% (94t, 34%) | -1% / 0.02 / -31% (63t, 38%) |
+| TSLA | +44% / 0.93 / -74% | +3% / 0.29 / -43% (41t, 39%) | +2% / 0.21 / -39% (101t, 37%) | +3% / 0.28 / -28% (72t, 46%) |
+| AMZN | +25% / 0.83 / -56% | +1% / 0.24 / -16% (32t, 38%) | +5% / 0.44 / -32% (87t, 49%) | +3% / 0.36 / -28% (55t, 53%) |
+| META | +25% / 0.78 / -77% | +7% / 0.76 / -15% (44t, 48%) | +10% / 0.79 / -24% (69t, 52%) | +6% / 0.56 / -19% (45t, 60%) |
+| INTC | +14% / 0.53 / -71% | -3% / -0.44 / -44% (34t, 18%) | -1% / -0.05 / -43% (71t, 32%) | +1% / 0.11 / -26% (47t, 47%) |
+| BA | +9% / 0.41 / -78% | -2% / -0.23 / -42% (26t, 27%) | -2% / -0.16 / -49% (69t, 38%) | -3% / -0.34 / -44% (43t, 42%) |
+| XOM | +9% / 0.45 / -62% | +1% / 0.17 / -23% (29t, 28%) | +1% / 0.19 / -26% (51t, 43%) | -0% / -0.00 / -32% (35t, 46%) |
+| 삼성전자 | +26% / 0.84 / -45% | +3% / 0.41 / -18% (23t, 43%) | n/a / 0.00 / -12% (43t, 51%) | n/a / -0.20 / -14% (22t, 55%) |
+| SK하이닉스 | +50% / 1.10 / -55% | +2% / 0.21 / -39% (33t, 39%) | +3% / 0.28 / -37% (61t, 41%) | -0% / 0.04 / -26% (43t, 47%) |
+| 현대차 | +9% / 0.42 / -61% | -0% / 0.03 / -28% (20t, 25%) | +2% / 0.19 / -25% (56t, 38%) | +2% / 0.27 / -15% (35t, 49%) |
+| 한화에어로 | +25% / 0.68 / -82% | -7% / -0.45 / -61% (32t, 25%) | -10% / -0.61 / -72% (70t, 23%) | -4% / -0.27 / -35% (46t, 30%) |
+| 한화오션 | +39% / 0.91 / -78% | n/a / 0.00 / -23% (25t, 44%) | n/a / 0.00 / -55% (68t, 37%) | n/a / 0.23 / -36% (49t, 47%) |
+| NAVER | +5% / 0.31 / -66% | -4% / -0.36 / -41% (16t, 6%) | -5% / -0.34 / -49% (41t, 24%) | -3% / -0.30 / -36% (23t, 35%) |
+| LG화학 | -1% / 0.19 / -82% | +0% / 0.08 / -26% (25t, 32%) | -5% / -0.31 / -52% (49t, 29%) | -0% / 0.01 / -28% (30t, 43%) |
+| 셀트리온 | +9% / 0.41 / -65% | -4% / -0.40 / -37% (20t, 20%) | -4% / -0.25 / -54% (56t, 32%) | -6% / -0.61 / -53% (39t, 31%) |
+| KB금융 | +18% / 0.66 / -62% | +1% / 0.15 / -32% (28t, 32%) | +7% / 0.49 / -32% (61t, 51%) | +3% / 0.27 / -29% (50t, 56%) |
+| 기아 | +9% / 0.43 / -58% | -1% / -0.13 / -25% (20t, 25%) | -3% / -0.16 / -41% (46t, 30%) | -4% / -0.50 / -37% (31t, 29%) |
+| **mean** | +22% / 0.68 / -65% | +0% / 0.05 / -31% | +0% / 0.07 / -38% | -0% / 0.03 / -29% |
+
+Summary across the 20 stocks:
+
+| | June rule | Owen, limit | Owen, bounce |
+|---|---|---|---|
+| mean win rate | 31% | 38% | **45%** |
+| mean trades | 31 | 68 | 46 |
+| mean Sharpe (hold 0.68) | 0.05 | 0.07 | 0.03 |
+| mean max drawdown (hold -65%) | -31% | -38% | **-29%** |
+| stocks where Sharpe > hold | 0 / 20 | 1 / 20 (META) | 0 / 20 |
+
+What Owen's rules do: the bounce-confirmed entry lifts the hit rate from 31% to 45% and gives the smallest drawdowns of any variant — exactly the "buy when it has stopped and looks like it will go up" intent. What they do not do: earn. Winners shrink (you buy a day later and higher, the target does not move), so the equity curve stays flat and no variant beats holding the stock on a risk-adjusted basis, in either market. The stocks where the rule looked best (META, KB금융, AMZN) are the ones that oscillated inside a channel for years; the ones where it lost (한화에어로, NAVER, 셀트리온, BA) trended hard in one direction and the "support" kept breaking.
+
+Honest conclusion for the whole day: a single-stock swing rule built on channel touches is a **risk-control tool, not a return engine**. Its real product is a smaller worst-case loss at the price of sitting out most of the up-move. Entry timing is the right knob to work on (it moved win rate 14 points), but the next gain has to come from *which* stocks to apply it to — channel-bound names — which is a selection problem this repo does not solve yet.
