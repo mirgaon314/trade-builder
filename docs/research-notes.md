@@ -217,3 +217,34 @@ What this says:
 - Concentrating (3-4 slots) buys CAGR (+15-18%) with the same Sharpe and a deeper worst loss (−32%); 8 slots leave about half the capital idle because only 2-5 positions are open on average. Sizing by the number of live signals rather than a fixed 1/N is the obvious next fix.
 
 Honest conclusion for the day: the channel touch is a decent *place to enter with a tight stop*, and the fixed target was what made it look like it could not earn. With winners allowed to run, the swing rule becomes an ordinary trend-following book on single stocks — Sharpe about 0.9, worst loss about a third less than holding — which is respectable and not special. What is still untested: a hindsight-free universe, sizing by live signal count, and a market-regime filter (every rule's bad years are 2018, 2022, 2024).
+
+## Round 7 — adversarial review (same day)
+
+Three independent reviewers (one defending round 7, one attacking it, one judging and re-running the numbers) were given the code, `data/touches_exits.csv`, and the book backtest. Everything below was re-run by the judge and spot-checked again afterwards (hold20 +2.01% / fix20 +0.54% / trail8 +1.07% on 3,761 touches; hold20 − trail8 = +0.94%, t = 4.98).
+
+**Placebo entries.** Enter every 5th trading day on the same 20 stocks with no channel at all, same initial stop, same 8% trailing exit: +1.53% per trade (n = 12,755). Channel touches: +1.05% (all), +1.26% (bounce-confirmed). In the US the bounce-confirmed touch and the placebo are a dead heat (+1.84% vs +1.85%); in KRX the touch is clearly worse (+0.34% vs +1.06%). As a 3-slot book the placebo and the touch rule land on the same Sharpe (0.84 vs 0.93, CAGR +17.2% vs +17.8%). **The channel line carries no entry information in the US and negative information in KRX.**
+
+**"The exit was the bottleneck" was the wrong reading.** Per-trade return under each rule, and the same trades normalised by capital-days (return per day of capital tied up, annualised):
+
+| rule on the same 3,787 touches | mean / trade | hold days | per capital-day | annualised |
+|---|---|---|---|---|
+| fixed target (rounds 5-6) | +0.2% | 5 | — | — |
+| stop only, exit after 20 days (`fix20`) | +0.55% | 9 | 0.058% | +14.7% |
+| touch + trail 8% (round 7) | +1.05% | 15 | 0.068% | +17.2% |
+| placebo entry + trail 8% | +1.53% | 18 | 0.083% | +21.0% |
+| **no rules: buy next open, sell close 20 days later** | **+2.01%** | 20 | **0.100%** | +25.3% |
+| equal-weight hold of the 20 | — | — | 0.099% | +27.3% |
+
+The ladder from +0.2% to +1.3% per trade in rounds 5-7 is a *holding-period* ladder: every rule earns less per day of capital than simply being long, and the fewer rules, the closer to the drift. Matched holds (same entry, same number of days as the trailing exit, no rule) return +1.14% vs +1.05% for the trailing stop with correlation 0.98 — the trailing stop is a holding-period extender, not a source of return. The initial stop is a net cost: same 20-day window, +0.55% with the 3-5% stop vs +2.01% without it. As a 3-slot book, "buy any touch, hold 20 days, no stop" gives +22.0% / Sharpe 0.94 / −36%, above touch + trail (+17.8% / 0.93 / −32%) and the placebo (+17.2% / 0.84 / −39%).
+
+**Other findings.** Return is concentrated: the top 1% of trades are 46% of the total and dropping the top 5% turns the mean negative. Removing MSFT, AAPL and BA cuts every rule by roughly half but leaves the ranking intact. Effective sample size is far below 3,787 (adjacent touches on the same stock correlate +0.3; about 267 stock-year blocks). Rounds 1-7 tried about 95 configurations with one walk-forward (round 6, verdict: no edge). Look-ahead, the `path[-1]` rescaling in `touch_book.py`, and slot management were checked and are fine. The paired exit comparison in round 7 is correct as a calculation (+0.98% / trade, t = 8.0); what it shows is that the rules *subtract* less when the target is removed, not that the touch or the exit adds anything.
+
+**What survives:** the gate buys drawdown with return (round 4-5); bounce confirmation raises the hit rate (round 5); the touch-selection classifier is a tautology once scored on money (round 6); the hand-picked 20-stock benchmark is contaminated (round 7). **What dies:** "the exit is the bottleneck"; "the touch is a good place to enter with a tight stop"; keeping the current structure and adding universe, sizing and regime layers on top.
+
+**Next round, one hypothesis at a time, block-bootstrapped by stock-year, nothing else added:**
+
+1. A hindsight-free universe (each year's S&P 500 / KOSPI 200 members, random 40): does anything — touch + trail, or plain 20-day holds — earn more per capital-day than the universe drift once the 2026 selection is gone? This is the only unresolved variable.
+2. Price the stop: same entries, `owen_stop` on/off, how much drawdown does the −1.46% per trade actually buy?
+3. One regime filter (index 20-day return > 0): are 2018 / 2022 / 2024 a rule failure or plain beta?
+
+If 1 fails, this repo resets to a "rule-free N-day long book" and the channel engine stays what round 4 already suggested: a chart annotation, not a signal.
