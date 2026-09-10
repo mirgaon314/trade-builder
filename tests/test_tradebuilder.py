@@ -157,3 +157,23 @@ def test_label_forward_target_then_stop():
     assert lab["why"] == "stop" and np.isclose(lab["ret"], -0.05)
     # no next bar -> no label
     assert np.isnan(label_forward(daily, len(daily) - 1, 110.0, 90.0, 40, 0.0)["ret"])
+
+
+from tradebuilder.swing import label_trailing
+
+
+def test_label_trailing_lets_winners_run_and_exits_on_pullback():
+    base = [[100, 101, 99, 100, 1]] * 5
+    up = [[100 + k, 101 + k, 99 + k, 100 + k, 1] for k in range(1, 21)]      # grinds up 20 points
+    down = [[119, 119, 100, 101, 1]]                                         # then a sharp pullback
+    daily = _bars(base + [[100, 100.5, 99.5, 100, 1]] + up + down)
+    lab = label_trailing(daily, 4, stop=90.0, trail_pct=0.05, max_hold=120, cost=0.0)
+    # highest high 121 -> trailing stop 114.95; pullback day opens 119 (above), low 100 hits the stop
+    assert lab["why"] == "trail" and np.isclose(lab["ret"], 121 * 0.95 / 100 - 1) and lab["peak"] > 0.2
+    # with a fixed target of 110 the old rule would have sold at 110; trailing kept ~15%
+    from tradebuilder.swing import label_forward
+    assert label_forward(daily, 4, 110.0, 90.0, 120, 0.0)["ret"] < lab["ret"]
+    # a losing trade still stops out at the initial stop
+    dn = _bars(base + [[100, 100.5, 99.5, 100, 1], [100, 100, 93, 94, 1]])
+    lab = label_trailing(dn, 4, stop=96.0, trail_pct=0.05, cost=0.0)
+    assert lab["why"] == "stop" and np.isclose(lab["ret"], -0.04)

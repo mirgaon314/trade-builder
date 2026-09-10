@@ -319,6 +319,47 @@ def label_forward(daily: pd.DataFrame, i: int, target: float, stop: float, max_h
     return {"fill": fill, "ret": C[-1] / fill - 1 - 2 * cost, "why": "open", "days": len(O) - 1 - (i + 1)}
 
 
+def atr_series(daily: pd.DataFrame, n: int = 14) -> np.ndarray:
+    """Average true range per bar using bars up to and including that bar (simple mean)."""
+    close = daily["Close"]
+    tr_ = pd.concat([daily["High"] - daily["Low"], (daily["High"] - close.shift()).abs(), (daily["Low"] - close.shift()).abs()], axis=1).max(axis=1)
+    return tr_.rolling(n, min_periods=1).mean().values
+
+
+def label_trailing(daily: pd.DataFrame, i: int, stop: float, *, atr: np.ndarray | None = None, atr_mult: float = 2.0,
+                   trail_pct: float | None = None, target: float | None = None, max_hold: int = 120, cost: float = 0.0005) -> dict:
+    """Outcome of buying the open of bar i+1 with a stop that only rises: no fixed target unless `target` is given.
+
+    The stop starts at max(stop, 5% below the fill). After each bar it is lifted to the highest high since
+    entry minus `atr_mult` ATRs (or minus `trail_pct` of that high). With `target`, the position is held
+    through the target and the trailing stop is lifted to at least the target minus one ATR once it is hit,
+    so the trade can keep what the fixed rule would have taken and still run.
+    """
+    O, H, L, C = (daily[c].values for c in ("Open", "High", "Low", "Close"))
+    if i + 1 >= len(O):
+        return {"fill": np.nan, "ret": np.nan, "why": "", "days": np.nan, "peak": np.nan}
+    if atr is None:
+        atr = atr_series(daily)
+    fill = O[i + 1]
+    stp = max(stop, fill * 0.95)
+    hi = fill
+    hit_target = False
+    last = min(len(O) - 1, i + 1 + max_hold)
+    for j in range(i + 1, last + 1):
+        if O[j] <= stp:
+            return {"fill": fill, "ret": O[j] / fill - 1 - 2 * cost, "why": "stop-gap", "days": j - (i + 1), "peak": hi / fill - 1}
+        if L[j] <= stp:
+            return {"fill": fill, "ret": stp / fill - 1 - 2 * cost, "why": "trail" if stp > fill else "stop", "days": j - (i + 1), "peak": hi / fill - 1}
+        hi = max(hi, H[j])
+        trail = hi * (1 - trail_pct) if trail_pct is not None else hi - atr_mult * atr[j]
+        if target is not None and H[j] >= target:
+            hit_target = True
+        if hit_target:
+            trail = max(trail, target - atr[j])
+        stp = max(stp, trail)
+    return {"fill": fill, "ret": C[last] / fill - 1 - 2 * cost, "why": "time", "days": last - (i + 1), "peak": hi / fill - 1}
+
+
 def touch_events(
     df: pd.DataFrame,
     *,

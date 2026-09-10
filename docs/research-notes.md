@@ -181,3 +181,39 @@ What this says:
 Honest conclusion: touch-day information separates bounces from breakdowns a little (AUC 0.69, every year), but not enough to change the economics — the model turns 47% → 55% hit rate into the *same* money, and once you score it on money it is a coin flip against "did it close back above the line". The channel touch is not where the return lives. If this line is pursued further, the two things not yet tried are (1) a market-regime input (index 5/20-day return — every rule's bad years are the same years) and (2) letting winners run past the fixed target, since the target cap is what turns better picks into no extra money.
 
 Bookkeeping from porting the simulator: the round-5 "June rule" column was run with the `ready+wait` gate (not `ready` only); the `n/a` CAGR cells for 삼성전자 and 한화오션 were caused by zero-price rows FinanceDataReader returns on halted days (2018 split), now dropped in `fetch_krx`. Re-running round 5 with the ported code on 2026-09-11 reproduces every US cell within ±1 trade (yfinance re-adjusts the whole series on each dividend); KRX cells move by up to ~9 trades because the zero-price rows (삼성전자, 한화오션, NAVER) also distorted the channel scale for a year and because KRX tick rounding makes the one-position-at-a-time path sensitive to any data revision. Old and new code give identical results on identical data. The summary row is unchanged: mean win 32% / 38% / 45%, Sharpe above hold in 0 / 1 / 0 of 20.
+
+## Round 7 — release the target cap (2026-09-11)
+
+Round 6 ended on: better picks do not turn into money because the fixed target (the next channel line, about +5%) caps every winner. So keep the entries and change only the exit. `scripts/touch_exits.py` re-labels the same 3,787 touches under exits that let winners run (`label_trailing` in `tradebuilder/swing.py`); `scripts/touch_book.py` then runs them as **one book across all 20 stocks** — take a touch if a slot is free, size 1/N, mark to market daily — against holding the same 20 stocks equal-weight.
+
+Per touch (buy the next open; initial stop as before, 3-5% below the line and at least 5% below the fill):
+
+| bounce-confirmed touches, exit = | win | avg win | avg loss | mean ret / trade | hold days | years > 0 |
+|---|---|---|---|---|---|---|
+| next channel line, 40 days (rounds 5-6) | 48% | +4.6% | −3.8% | +0.2% | 5 | 10 / 16 |
+| hold through target, then trail 2 ATR | 38% | +6.1% | −3.1% | +0.4% | 7 | 11 / 16 |
+| no target, trail 2 ATR below the highest high | 36% | +6.7% | −3.2% | +0.4% | 7 | 11 / 16 |
+| no target, trail 3 ATR | 34% | +10.2% | −3.7% | +1.0% | 13 | 10 / 16 |
+| **no target, trail 8%** | 34% | **+10.8%** | −3.8% | **+1.3%** | 18 | **12 / 16** |
+
+Mean return per touch goes from +0.2% to +1.3% — the first change all day that moved the per-trade economics rather than the hit rate. It moves the same way for all touches and for gate + bounce. The cost is the hit rate (48% → 34%) and three times the holding period.
+
+As one book (2011-2026, 5 bps per side, trailing 8% exit):
+
+| slots (size 1/N) | selection | CAGR | Sharpe | maxDD | avg open | trades |
+|---|---|---|---|---|---|---|
+| 8 | bounce, fixed target | +2.9% | 0.43 | −22% | 2.2 | 1,567 |
+| 8 | bounce, trail 8% | +9.9% | 0.88 | −22% | 4.5 | 1,197 |
+| 8 | all touches, trail 8% | +11.9% | 0.91 | −32% | 5.8 | 1,934 |
+| 4 | bounce, trail 8% | +14.8% | 0.90 | −32% | 3.0 | 770 |
+| 3 | all touches, trail 8% | +17.8% | 0.93 | −32% | 2.5 | 785 |
+| — | **equal-weight hold of the 20** | **+27.3%** | **1.37** | −37% | — | — |
+
+What this says:
+
+- **The exit was the bottleneck, not the entry.** Same touches, same stops: replacing the fixed target with a trailing stop takes the book from Sharpe 0.43 to about 0.9 at the same drawdown (−22%), and CAGR from +3% to +10%. Nothing on the entry side today (Owen's gate, a classifier, expected-return ranking) moved anything by a comparable amount.
+- **Once winners run, touch selection stops mattering.** All touches and bounce-confirmed touches land at the same Sharpe (0.91 vs 0.88); the gate + bounce subset is worse only because it takes too few trades to fill the book. The return is coming from *being long a single stock with a trailing stop while it trends*, not from reading the touch.
+- **It still loses to holding these stocks, and that benchmark is rigged.** The 20 names were picked in 2026 knowing they were AAPL, NVDA, TSLA, SK하이닉스 and so on; equal-weight hold of that list has Sharpe 1.37, which no long-only rule on those names is going to beat. The fair test is a universe chosen without hindsight (all S&P 500 / KOSPI 200 members as of each year). The rule's Sharpe of about 0.9 with a third less drawdown is the number to carry forward, not the gap to +27%.
+- Concentrating (3-4 slots) buys CAGR (+15-18%) with the same Sharpe and a deeper worst loss (−32%); 8 slots leave about half the capital idle because only 2-5 positions are open on average. Sizing by the number of live signals rather than a fixed 1/N is the obvious next fix.
+
+Honest conclusion for the day: the channel touch is a decent *place to enter with a tight stop*, and the fixed target was what made it look like it could not earn. With winners allowed to run, the swing rule becomes an ordinary trend-following book on single stocks — Sharpe about 0.9, worst loss about a third less than holding — which is respectable and not special. What is still untested: a hindsight-free universe, sizing by live signal count, and a market-regime filter (every rule's bad years are 2018, 2022, 2024).

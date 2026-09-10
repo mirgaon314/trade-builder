@@ -73,7 +73,7 @@ python scripts/swing_stocks.py --us AAPL META --kr 005930 --variants owen-bounce
 python scripts/swing_stocks.py --out stats.csv --trades-out trades.csv   # 10 US + 10 KRX, three variants (~25 min)
 ```
 
-Findings so far are in `docs/research-notes.md` rounds 4-5: on 20 single stocks the rule keeps drawdowns at roughly half of holding and the bounce-confirmed entry lifts the win rate from 31% to 45%, but no variant beats holding on a risk-adjusted basis. Its ceiling is set by exposure (~16% of days in the market) and a fixed target, not by the entry. Round 6 asks whether a model can pick *which* touches to take: on 3,789 touches it separates bounces a little (out-of-sample AUC 0.69 every year) but, once scored on expected return rather than hit rate, it is a coin flip against the one-line rule "did it close back above the line".
+Findings so far are in `docs/research-notes.md` rounds 4-5: on 20 single stocks the rule keeps drawdowns at roughly half of holding and the bounce-confirmed entry lifts the win rate from 31% to 45%, but no variant beats holding on a risk-adjusted basis. Its ceiling is set by exposure (~16% of days in the market) and a fixed target, not by the entry. Round 6 asks whether a model can pick *which* touches to take: on 3,789 touches it separates bounces a little (out-of-sample AUC 0.69 every year) but, once scored on expected return rather than hit rate, it is a coin flip against the one-line rule "did it close back above the line". Round 7 changes the exit instead: with a trailing stop in place of the fixed target, the same touches as one 8-slot book go from Sharpe 0.43 to 0.88 at the same drawdown — the exit, not the entry, was the bottleneck.
 
 ## What it does *not* do (yet)
 
@@ -96,7 +96,9 @@ scripts/compare_assets.py same walk-forward across several tickers
 scripts/swing_stocks.py   channel swing rule on 10 US + 10 KRX stocks, three entry/stop variants
 scripts/touch_dataset.py  every support-line touch on those stocks with touch-day features + outcome → data/touches.csv (generated, not committed)
 scripts/touch_model.py    walk-forward model that picks which touches to take, scored against the hand rules
-tests/                    11 tests: indicator sanity, no-look-ahead, cost accounting, fold shapes, explanation sums to log-odds, swing exit/bounce/stop logic
+scripts/touch_exits.py    re-labels every touch under trailing-stop exits (no fixed target)
+scripts/touch_book.py     one book across the 20 stocks: N slots, 1/N sizing, daily mark to market, vs equal-weight hold
+tests/                    14 tests: indicator sanity, no-look-ahead, cost accounting, fold shapes, explanation sums to log-odds, swing exit/bounce/stop/trailing logic, touch features and labels
 ```
 
 Design notes: [DESIGN.md](DESIGN.md).
