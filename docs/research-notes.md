@@ -279,3 +279,22 @@ Pre-registered: enter only when the index's 20-day return is positive (SPY for U
 Verdict: **fails.** The filter raises the per-trade mean a little in the flat decade and not at all on the stocks, while removing a third to a half of the trades everywhere — so exposure-adjusted return is flat in 2000-2010 and halved in 2010-2026. It does not rescue the bad years: on the touches 2022 gets *worse* with the filter on (hold20 −0.6% → −5.2% per trade, trail −1.2% → −1.4%), because a positive 20-day index return inside a bear market is a rally to sell, not a regime; 2018 improves slightly (−1.0% → −0.3%); 2011 and 2015 worsen. The 200-day-MA variant does help in the flat decade on SPY (hold20 sum +0.5% → +19% / yr, trail +17% → +33%) but costs the same third of the bull-market exposure and is neutral on the stocks (per capital-day 0.0007 → 0.0008). So the bad years are beta the rules cannot see in time with a price-only index signal, and "hold in bull, trail in flat" is not something a 20-day lookback can switch.
 
 State of the research after eight rounds: on hindsight-picked large caps 2011-2026, every rule tested earns less per day of capital than being long; the trailing exit is the only rule with a positive mean in a flat decade and it buys a two-thirds cut in the worst trades; the channel touch adds nothing as an entry; a simple index regime filter does not change any of that. The single remaining question is whether any of this changes on a universe chosen without hindsight.
+
+## Round 9 — a universe chosen without hindsight (2026-09-11)
+
+`scripts/universe.py`: for each year 2001-2025, 40 random members of the S&P 500 *as of that January* (membership from Clenow's list via github.com/fja05680/sp500, `data/sp500_ticker_start_end.csv`), placebo entries every 5th trading day inside that year, the same three exits. 565 tickers sampled, 410 have Yahoo price history; **coverage is 42% in 2001 rising to 98% in 2024 (mean 72%)** — Yahoo has no delisted names, so the early years still over-represent survivors and that gap is the residual bias, in favour of holding.
+
+| span | trades | hold 20d, no stop | stop only, 20d | trail 8% | years trail beats hold per capital-day | 5th pct hold / trail |
+|---|---|---|---|---|---|---|
+| 2001-2010 | 11,961 | +0.94% (0.047% / day) | +0.27% (0.023%) | +0.70% (0.028%) | 2 / 10 | −15.2% / −5.1% |
+| 2011-2025 | 24,685 | +1.01% (0.051% / day) | +0.41% (0.032%) | +0.63% (0.024%) | 3 / 15 | −12.0% / −5.1% |
+| all | 36,646 | +0.99% (0.049% / day) | +0.36% (0.029%) | +0.65% (0.025%) | 5 / 25 | −13.1% / −5.1% |
+
+What changes and what does not:
+
+- **The drift halves.** Return per day of capital for plain 20-day holds drops from 0.100% on the 20 hand-picked names to 0.049% here — the 2026 stock picking was worth about 12 points of CAGR on its own. That is the size of the contamination in rounds 4-7.
+- **The ordering does not change.** No rules > stop only > trailing stop, per day of capital, in both spans and in 20 of 25 years. The stop still costs about two thirds of the return; the trail still pays for its tail protection (worst 5% of trades −5% instead of −13%) with roughly half the return per day.
+- 2008 is the one year where everything loses about equally (hold −1.8% per trade, trail −1.2%) and 2002 the one where the rules lose *more* than holding. There is no year in 25 where the rules turn a losing year positive.
+- Caveat on the flat decade: with 42-70% coverage, "2001-2010" here is not flat (hold 20d is +0.94% per trade) because the companies that died are missing. The clean flat-decade evidence stays the index-ETF check above, where the trailing exit was the one rule with a positive mean.
+
+Conclusion after nine rounds, stated once: on US large caps, any span, any universe tried, **being long earns more per day of capital than every rule in this repo**; the initial stop is a cost paid every year; the trailing exit buys a large cut in the worst trades at about half the return, and is the only rule that comes out ahead when the index drift is zero. The channel touch, the gate, bounce confirmation, the touch classifier and the index regime filter add nothing that survived a placebo, a paired comparison, or a hindsight-free sample. If this repo is to hold a *strategy* rather than a set of measured non-results, the return has to come from somewhere other than timing entries and exits on price alone — cross-sectional selection, sizing by forecast volatility, or data the price series does not contain, as round 1 already said.
