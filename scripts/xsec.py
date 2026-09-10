@@ -73,36 +73,29 @@ def stats(r: pd.Series, spy: pd.Series | None = None) -> dict:
     return out
 
 
-def main() -> None:
-    a = argparse.ArgumentParser()
-    a.add_argument("--signal", default="mom12_1", choices=["mom12_1", "rev1", "mom6_1"])
-    a.add_argument("--decile", type=float, default=0.1)
-    a.add_argument("--start", default="2001-01-01")
-    args = a.parse_args()
-    px, tab = load_prices("1999-01-01")
-    mask = member_mask(px, tab)
-    sig = signals(px)[args.signal]
-    fwd = px.shift(-1) / px - 1                                  # next month's return
-    spy = fetch("SPY", "1999-01-01")["close"].resample("ME").last().pct_change().shift(-1)
-
+def long_short(px: pd.DataFrame, mask: pd.DataFrame, sig: pd.DataFrame, start: str, decile: float = 0.1) -> pd.DataFrame:
+    """Monthly decile long-short on `sig` (month-end x ticker): returns a frame with long / short / ls / univ columns."""
+    fwd = px.shift(-1) / px - 1
     rows, prev_long, prev_short = [], set(), set()
     for t in px.index:
-        if t < pd.Timestamp(args.start) or t >= px.index[-1]:
+        if t < pd.Timestamp(start) or t >= px.index[-1] or t not in sig.index:
             continue
-        ok = mask.loc[t] & sig.loc[t].notna() & fwd.loc[t].notna()
-        s = sig.loc[t][ok]
+        s = sig.loc[t].reindex(px.columns)
+        ok = mask.loc[t] & s.notna() & fwd.loc[t].notna()
+        s = s[ok]
         if len(s) < 100:
             continue
-        k = max(10, int(len(s) * args.decile))
+        k = max(10, int(len(s) * decile))
         long, short = set(s.nlargest(k).index), set(s.nsmallest(k).index)
         turn = (len(long - prev_long) + len(short - prev_short)) / (2 * k)
         rl, rs, ru = fwd.loc[t][list(long)].mean(), fwd.loc[t][list(short)].mean(), fwd.loc[t][ok].mean()
         rows.append({"date": t, "n": len(s), "long": rl - COST * turn, "short": rs, "ls": (rl - rs) / 2 - COST * turn, "univ": ru, "turnover": turn})
         prev_long, prev_short = long, short
-    d = pd.DataFrame(rows).set_index("date")
-    d.to_csv(f"data/xsec_{args.signal}.csv")
+    return pd.DataFrame(rows).set_index("date")
 
-    print(f"signal {args.signal}: {len(d)} months {d.index[0].date()}..{d.index[-1].date()}, universe {d.n.mean():.0f} names/month, decile {d.n.mean() * args.decile:.0f}, turnover {d.turnover.mean():.0%}/month\n")
+
+def report(d: pd.DataFrame, spy: pd.Series, label: str, decile: float = 0.1) -> None:
+    print(f"signal {label}: {len(d)} months {d.index[0].date()}..{d.index[-1].date()}, universe {d.n.mean():.0f} names/month, decile {d.n.mean() * decile:.0f}, turnover {d.turnover.mean():.0%}/month\n")
     tab_ = pd.DataFrame({
         "long-short (half each, dollar-neutral)": stats(d.ls, spy),
         "long decile only": stats(d.long, spy),
@@ -116,8 +109,25 @@ def main() -> None:
     print(yr.to_string(float_format=lambda x: f"{x:+.1%}"))
     for lab, (s, e) in {"2001-2008": (2001, 2008), "2009-2016": (2009, 2016), "2017-2025": (2017, 2025)}.items():
         x = d[(d.index.year >= s) & (d.index.year <= e)]
+        if len(x) < 12:
+            continue
         st = stats(x.ls, spy)
         print(f"{lab}: long-short ann {st['ann']:+.1%} Sharpe {st['sharpe']:.2f} maxDD {st['maxdd']:.0%} t {st['t']:.1f} beta {st['beta']:.2f} alpha {st['alpha_ann']:+.1%}")
+
+
+def main() -> None:
+    a = argparse.ArgumentParser()
+    a.add_argument("--signal", default="mom12_1", choices=["mom12_1", "rev1", "mom6_1"])
+    a.add_argument("--decile", type=float, default=0.1)
+    a.add_argument("--start", default="2001-01-01")
+    args = a.parse_args()
+    px, tab = load_prices("1999-01-01")
+    mask = member_mask(px, tab)
+    sig = signals(px)[args.signal]
+    spy = fetch("SPY", "1999-01-01")["close"].resample("ME").last().pct_change().shift(-1)
+    d = long_short(px, mask, sig, args.start, args.decile)
+    d.to_csv(f"data/xsec_{args.signal}.csv")
+    report(d, spy, args.signal, args.decile)
 
 
 if __name__ == "__main__":

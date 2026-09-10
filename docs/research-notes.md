@@ -324,3 +324,22 @@ What this says:
 - So the honest answer to "why do quants exist": not from this. What made money after 2000 in equities is mostly not price-only signals on liquid large caps — it is breadth beyond the S&P 500, fundamentals and alternative data, intraday microstructure, and other asset classes. This repo now has the harness to test a signal properly; what it does not have is a signal.
 
 Next, if continued: plug this repo's own daily indicator model into `xsec.py` as a ranking signal (P(up) per stock, rank cross-sectionally) — one run, scored the same way — before spending any more time on price-based timing.
+
+## Round 11 — this repo's indicator model as a cross-sectional signal (2026-09-11)
+
+`scripts/xsec_model.py`: the repo's own logistic on the base indicator set (`ret_1/5/20, sma_gap_10_50, rsi_14, macd_hist, vol_20`), fit walk-forward each year on every 5th stock-day of all point-in-time S&P 500 members before that year (60-day embargo, 105k → 785k rows), scoring every member at each month-end with P(next day up), ranked cross-sectionally into the same decile long-short as round 10. 752 tickers with daily bars, 4.1M stock-days, 381 names per month, 2004-2026.
+
+| 2004-2026, monthly | ann. return | vol | Sharpe | max DD | t | beta |
+|---|---|---|---|---|---|---|
+| long-short decile (target: next day up) | −0.6% | 9% | −0.07 | −40% | −0.3 | −0.29 |
+| same, target: next 21 days up | −3.1% | 10% | −0.31 | −62% | −1.5 | −0.30 |
+| long decile only | +13.6% | 15% | 0.91 | −44% | 4.3 | 0.90 |
+| equal-weight universe | +12.3% | 16% | 0.75 | −53% | 3.6 | 1.08 |
+| long decile minus universe | +1.3% / yr | | | | 0.9 | |
+| long-short alpha after beta | +2.7% / yr | | | | 1.5 | |
+
+In-sample accuracy of the pooled model is 0.52 every year (the same 68% quoted in the README for SPY was the index drift, not skill). The short decile returns *more* than the universe (+13.9% vs +12.3%): the stocks the model likes least go up as much as the rest. Turnover is 83% a month, which alone costs about 1% a year at 10 bps. The only thing the ranking captures is a mild low-beta tilt (long-short beta −0.3), which produces a positive but insignificant alpha (t 1.5) and a long decile whose Sharpe edge over the universe comes from lower volatility, not higher return.
+
+Verdict: **nothing.** Scored the way a quant would score it — dollar-neutral, 380 names a month, 22 years out of sample — the indicator model has no cross-sectional information about next month's returns, and switching the target to a monthly horizon makes it worse.
+
+Where this leaves the repo after eleven rounds in two days: a correct backtest harness (walk-forward, trade-level swing simulator, one-book portfolio, hindsight-free universe, cross-sectional long-short validated against the French momentum factor at 0.91 correlation) and a complete set of *measured negatives* for price-only signals on US large caps — daily indicator model, channel touches, gates, bounce confirmation, touch classifier, fixed target vs trailing exits, index regime filter, 12-1 / 6-1 momentum, 1-month reversal, and the indicator model as a ranking. The trailing exit is the one rule with a positive mean when the index drift is zero. Any next signal has to bring information the price series does not contain.
