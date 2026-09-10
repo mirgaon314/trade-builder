@@ -71,3 +71,24 @@ The channel engine from the separate `trader` project (weekly pivots → candida
 (Rows differ slightly from Round 2 because the channel needs 300 warm-up days, which shifts the walk-forward folds.)
 
 As daily-direction features the channel does not help and dilutes Ichimoku. That is not surprising: the channel was designed as a **swing tool** — buy at a line touch, target the next level, stop below — and "is tomorrow up?" is the wrong question to ask it. The right test is a trade-level backtest of the actual entry/target/stop rule from `trader/signal/builder.py`, which is a different experiment (next).
+
+## Round 4 — the channel rule as a *swing trade*, not a daily signal
+
+Trade-level simulation of the actual rule in [`fib-channel-trader`](https://github.com/mirgaon314/fib-channel-trader) `signal/builder.py`: scan every 5 days on data up to that day; if the state is `ready` (price within 25% of the support line, above/in the Ichimoku cloud, RSI < 70, reward:risk ≥ 2), place a limit buy at the support line valid 5 days; exit at the next level (target), the swing-low/ATR stop, or after 40 days. One position at a time, 5 bps per side. US ETFs 2010-2026, KRX tick rounding disabled.
+
+| gate | asset | trades | win | avg win | avg loss | CAGR | Sharpe | maxDD | exposure |
+|---|---|---|---|---|---|---|---|---|---|
+| ready | SPY | 11 | 36% | +4.7% | -1.9% | +0.3% | 0.12 | -8% | 4% |
+| ready | QQQ | 23 | 39% | +5.2% | -2.2% | +0.8% | 0.22 | -15% | 6% |
+| ready | TLT | 5 | 20% | +1.0% | -2.0% | -0.5% | -0.15 | -9% | 3% |
+| ready | GLD | 9 | 22% | +3.8% | -1.8% | -0.4% | -0.12 | -13% | 3% |
+| ready | IWM | 21 | 29% | +5.1% | -2.0% | -0.1% | -0.01 | -18% | 5% |
+| ready+wait | SPY | 18 | 44% | +5.2% | -2.1% | +1.2% | 0.35 | -9% | 7% |
+| ready+wait | QQQ | 32 | 38% | +4.8% | -2.1% | +0.9% | 0.21 | -22% | 9% |
+| ready+wait | TLT | 10 | 10% | +1.0% | -2.0% | -1.2% | -0.36 | -17% | 4% |
+
+Requiring `confidence == strong` on top of `ready` changed nothing (the `ready` gate already implies it). Buy & hold over the same span: SPY +14.1% / 0.86, QQQ +18.9% / 0.94.
+
+Reading: the rule is disciplined — wins are about 2.4x the size of losses, exactly the 2:1 gate — but it is in the market only 3-9% of the time, and the hit rate (30-45%) sits right at the breakeven for that payoff, so the equity curve is flat. It never blows up (worst loss -8% to -22% vs -34% to -48% for holding) and it never earns. On trending index ETFs, pullbacks to a channel line are rare and often *are* the start of a breakdown; the rule was designed for KRX single stocks that oscillate inside channels, which is where it should be tested next (data layer for that already exists in `fib-channel-trader`).
+
+Owen's framing, which the numbers support: the channel is one signal among several, closer to a high/low locator than a strategy on its own.
