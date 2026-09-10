@@ -92,3 +92,15 @@ Requiring `confidence == strong` on top of `ready` changed nothing (the `ready` 
 Reading: the rule is disciplined — wins are about 2.4x the size of losses, exactly the 2:1 gate — but it is in the market only 3-9% of the time, and the hit rate (30-45%) sits right at the breakeven for that payoff, so the equity curve is flat. It never blows up (worst loss -8% to -22% vs -34% to -48% for holding) and it never earns. On trending index ETFs, pullbacks to a channel line are rare and often *are* the start of a breakdown; the rule was designed for KRX single stocks that oscillate inside channels, which is where it should be tested next (data layer for that already exists in `fib-channel-trader`).
 
 Owen's framing, which the numbers support: the channel is one signal among several, closer to a high/low locator than a strategy on its own.
+
+Without any confirmation gate (limit buy at the support line whenever one exists):
+
+| asset | trades | win | avg win | avg loss | CAGR | Sharpe | maxDD | exposure | hold CAGR / Sharpe / maxDD |
+|---|---|---|---|---|---|---|---|---|---|
+| SPY | 140 | 62% | +2.7% | -2.9% | +4.0% | 0.48 | -18% | 34% | +14.1% / 0.86 / -34% |
+| QQQ | 153 | 55% | +3.4% | -2.8% | +5.4% | 0.52 | -16% | 33% | +18.9% / 0.94 / -35% |
+| TLT | 158 | 55% | +2.4% | -2.4% | +1.4% | 0.20 | -34% | 44% | +2.2% / 0.22 / -48% |
+| GLD | 143 | 50% | +3.0% | -2.6% | +1.0% | 0.16 | -32% | 44% | +7.1% / 0.49 / -46% |
+| IWM | 166 | 47% | +3.6% | -2.9% | +0.4% | 0.09 | -50% | 33% | +10.2% / 0.55 / -41% |
+
+Dropping the Ichimoku/RSI/reward-risk gate multiplies trades by ~8 and turns the flat curve into a small positive one on the equity ETFs, but the payoff ratio collapses toward 1:1 and the drawdown protection is gone on IWM (-50%). The gate trades away almost all the return to keep the losses small; without it the rule is an ordinary mean-reversion entry with no edge over holding.
